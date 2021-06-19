@@ -1,0 +1,69 @@
+Kafka - Notes
+
+- Brooker = Máquina = Server
+	OBS: No CDC são 2 brookers
+
+- Topics: A particular stream of data
+	Similar to a table in a database (without all the constraints)
+	OBS: No CDC cada tabela é um tópico msm
+
+- Topics are split in partitions
+	Each partition is a stream of data and the data in it is ordered.
+	Each message within a partition gets an incremental id (position off the message in the partition), that specific id is called offset.
+	Topic -> Partitions -> Offset.
+	The partitions are independent, we write to each partition independently at it's own speed, so the offsets on each partition are independent.
+	Message = (TopicName,PartitionID,OffSet).
+	Once the data is written to a partition, it can't be changed (immutability).
+	Order is guaranteed only within a partition (not across partitions).
+	If you don't provide a key to your message, then when you send it to a topic, it will be assigned to a random partition.
+	The number of partitions in a topic doesn't relate with the number of brookers 
+	OBS: No CDC cada tópico tem só 1 partição
+
+- Producers
+	Producers write data to topics (which is made of partitions) - it writes to each partition of the topic.
+	Producers can send a key with the message, if not, data is sent round robin (partition 0, then 1, then 2).
+	If a key is sent, then all messages for that key will always go to the same partition (as loong as the number of partitions remains constant for that topic).
+	A key is basically sent if you need message ordering for a specific field (ex:id).
+	OBS: No CDC o Producer é o Spark
+
+- Messages
+	Kafka Message created by the producer - composed primarly of (key,value).
+	Also (compression type,headers(optional)), when it arrives to a topic, it receives (partition,offset) and a timestamp
+	The messages are serialized into binaries
+
+- Consumers
+	Consumers read data from a topic (identified by name).
+	Data is read in order within each partitions.
+	The messages needs to be deserialized in order to be transformed into objects/data.
+
+	OBS: No CDC é o Kafka-Connect
+
+- Consumer Groups
+	  Each consumer within a group reads from exclusive partitions.
+	  A topic partition can be consumed by many different consumer groups at the same time.  
+	  Ex: A consumer group with twos consumers receiving data from one topic with 3 partitions, consumer 1 -> partition 0 and partition 1 ; consumer 2 -> partition 2.
+	  	  Other consumer group with three consumers receiving data from one topic with 3 partitions, consumer 1 -> partition 0 ; consumer 2 ->  partition 1 ; consumer 3 -> partition 2.
+	  	  Other consumer group with one consumer receiving data from one topic with 3 partitions, consumer 1 -> partition 0 and partition 1 and partition 2.
+	  If we have more consumers than partitions, one consumer will be inactive, but in case of failure he will step up.
+
+- Delivery semantics for Consumers
+	- https://www.youtube.com/watch?v=9o5LAbPNc28
+
+- Lag são os offsets que não foram comitados ainda, ou seja, as mensagens que chegaram no kafka mas não foram consumidas
+
+- Brokers
+	Cada broker contêm certas partições dos tópicos, o Kafka faz o possível pra espalhar as partições pelos brookers
+	Cada broker é chamado tbm de bootstrap server, pq tu só precisa se conectar com um broker pra se conectar com o cluster inteiro
+
+- Topic replication factor
+	Replication factor é normalmente 2 ou 3.
+	Cada partição do tópico é replicada x vezes entre os brookers
+
+- Leader for a partition
+	Somente 1 broker pode ser líder de uma partição, somente esse líder pode receber dados pra essa partição, os outros brookers vão somente sincronizar os dados, portanto, cada partição têm 1 líder e múltiplos ISR (in-sync replica)
+
+- Producers acknowledgments
+	https://www.youtube.com/watch?v=BMuPaeL7uMQ - 8:20
+
+
+
