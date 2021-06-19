@@ -1,3 +1,6 @@
+.idea/
+zk-single-kafka-multiple/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
