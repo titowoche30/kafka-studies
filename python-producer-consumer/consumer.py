@@ -7,7 +7,7 @@ def get_consumer(key_deserializer, value_deserializer,
                  client_id = 'cwoche-python',
                  group_id='cwoche-topic-group',
                  auto_offset_reset='earliest',
-                 consumer_timeout_ms=6000):
+                 consumer_timeout_ms=30000):
 
     consumer = KafkaConsumer(bootstrap_servers=bootstrap_servers,
                              client_id=client_id,
@@ -36,7 +36,8 @@ if __name__ == '__main__':
     for event in consumer:
         print(f'\n key = {event.key}')
         print(f'partition = {event.partition}')
-        print(f'value = {event.value}')
+        print(event)
+        # print(f'value = {event.value}')
 
     print(f'\n {consumer.metrics()}')
     consumer.close()
