@@ -44,18 +44,20 @@ def get_producer(key_serializer, value_serializer, bootstrap_servers=['localhost
     return producer
 
 
-def send_events(producer, events, topic='cwoche-topic', n_partitions=2):
+def send_events(producer, events, output_events, topic='cwoche-topic', n_partitions=2 ):
     aux = 0
     print('\nSending events to Kafka...')
     for event in events:
         rand = random.randint(1, n_partitions)
         producer.send(topic=topic,key=rand,value=event)
         aux += 1
+        if output_events:
+            print(event)
 
     print(f'\n{aux} events were sent')
 
     producer.flush()
-    print(f'\n{producer.metrics()}')
+    # print(f'\n{producer.metrics()}')
     producer.close()
 
 
@@ -88,6 +90,8 @@ if __name__ == '__main__':
                         help="Use the simple timestamp generator or not", default=False, type=bool)
     parser.add_argument("-c", "--count",
                         help="How many timestamps to be generated ", default=100, type=bool)
+    parser.add_argument("-o", "--output_events",
+                        help="Output events in the shell or not", default=False, type=bool)
 
     args = parser.parse_args()
 
@@ -101,5 +105,6 @@ if __name__ == '__main__':
     producer = get_producer(key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                             value_serializer=lambda v: json.dumps(v).encode('utf-8'))
     t0 = time.time()
-    send_events(producer, events)
+    send_events(producer, events, output_events=args.output_events)
+
     print(f'\nit took {time.time()- t0} seconds to send')
