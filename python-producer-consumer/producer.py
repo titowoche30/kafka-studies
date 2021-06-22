@@ -4,6 +4,7 @@ import json
 import random
 import time
 import argparse
+from random_timestamp import random_timestamp
 
 
 def get_events(user_pool_size, sessions_per_day, duration_seconds):
@@ -11,6 +12,15 @@ def get_events(user_pool_size, sessions_per_day, duration_seconds):
     events = simulation.run(duration_seconds=duration_seconds)
 
     return events
+
+
+def get_random_timestamps(length):
+    for _ in range(length):
+        yield str(random_timestamp(
+            year=random.randint(2018, 2021),
+            month=random.randint(1, 5),
+            day=random.randint(1, 10),
+            part='DATE/TIME'))
 
 
 def get_producer(key_serializer, value_serializer, bootstrap_servers=['localhost:9092'], client_id='cwoche-python', acks='all'):
@@ -74,16 +84,22 @@ if __name__ == '__main__':
                         help="The sessions_per_day used to simulate the events", default=10, type=int)
     parser.add_argument("-d", "--duration_seconds",
                         help="The duration_seconds of the simulation", default=15, type=int)
+    parser.add_argument("-t", "--timestamps",
+                        help="Use the simple timestamp generator or not", default=False, type=bool)
+    parser.add_argument("-c", "--count",
+                        help="How many timestamps to be generated ", default=100, type=bool)
 
     args = parser.parse_args()
 
-    events = get_events(user_pool_size=args.pool_size,
-                        sessions_per_day=args.sessions_day,
-                        duration_seconds=args.duration_seconds)
+    if not args.timestamps:
+        events = get_events(user_pool_size=args.pool_size,
+                            sessions_per_day=args.sessions_day,
+                            duration_seconds=args.duration_seconds)
+    else:
+        events = get_random_timestamps(args.count)
 
     producer = get_producer(key_serializer=lambda k: json.dumps(k).encode('utf-8'),
                             value_serializer=lambda v: json.dumps(v).encode('utf-8'))
     t0 = time.time()
     send_events(producer, events)
     print(f'\nit took {time.time()- t0} seconds to send')
-
